@@ -9,10 +9,159 @@
   <meta name="theme-color" content="#000000" />
   <title>AU Property Portfolio Tracker</title>
 
-  <!-- Embedded Apple Touch Icon & Favicon SVG (Custom Architectural Dark Glass Design) -->
-  <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' width='512' height='512'%3E%3Cdefs%3E%3ClinearGradient id='bgGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23161B26'/%3E%3Cstop offset='50%25' stop-color='%230A0E17'/%3E%3Cstop offset='100%25' stop-color='%23030710'/%3E%3C/linearGradient%3E%3ClinearGradient id='neonCyan' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2300F0FF'/%3E%3Cstop offset='100%25' stop-color='%230A84FF'/%3E%3C/linearGradient%3E%3ClinearGradient id='emeraldGold' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2330D158'/%3E%3Cstop offset='100%25' stop-color='%2328CD41'/%3E%3C/linearGradient%3E%3ClinearGradient id='borderBezel' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2338383A'/%3E%3Cstop offset='50%25' stop-color='%231C1C1E'/%3E%3Cstop offset='100%25' stop-color='%230A84FF' stop-opacity='0.6'/%3E%3C/linearGradient%3E%3Cfilter id='glow' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeGaussianBlur stdDeviation='10' result='blur'/%3E%3CfeComposite in='SourceGraphic' in2='blur' operator='over'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='512' height='512' rx='115' fill='url(%23bgGrad)'/%3E%3Crect x='6' y='6' width='500' height='500' rx='110' fill='none' stroke='url(%23borderBezel)' stroke-width='6'/%3E%3Cpath d='M80 370 L432 370' stroke='%232C2C2E' stroke-width='6' stroke-linecap='round'/%3E%3Cpath d='M100 370 L100 240 L256 120 L412 240 L412 370 Z' fill='%23121722' stroke='%231F293D' stroke-width='4'/%3E%3Cpath d='M76 250 L256 112 L436 250' fill='none' stroke='url(%23neonCyan)' stroke-width='18' stroke-linecap='round' stroke-linejoin='round' filter='url(%23glow)'/%3E%3Cpath d='M220 370 L220 280 C220 268 230 258 242 258 L270 258 C282 258 292 268 292 280 L292 370 Z' fill='%231A2333' stroke='%2300F0FF' stroke-width='4'/%3E%3Ccircle cx='370' cy='150' r='58' fill='%230D2818' stroke='%2330D158' stroke-width='6' filter='url(%23glow)'/%3E%3Ctext x='370' y='172' font-family='-apple-system,BlinkMacSystemFont,sans-serif' font-size='64' font-weight='900' fill='url(%23emeraldGold)' text-anchor='middle'%3E$%3C/text%3E%3Cpath d='M140 330 L175 330 L175 285 L140 285 Z' fill='%230A84FF' fill-opacity='0.3' stroke='%2300F0FF' stroke-width='3' rx='4'/%3E%3Cpath d='M337 330 L372 330 L372 285 L337 285 Z' fill='%230A84FF' fill-opacity='0.3' stroke='%2300F0FF' stroke-width='3' rx='4'/%3E%3C/svg%3E" />
-  <link rel="apple-touch-icon-precomposed" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' width='512' height='512'%3E%3Crect width='512' height='512' rx='115' fill='%230A0E17'/%3E%3Cpath d='M76 250 L256 112 L436 250' fill='none' stroke='%2300F0FF' stroke-width='20' stroke-linecap='round'/%3E%3Ccircle cx='370' cy='150' r='58' fill='%230D2818' stroke='%2330D158' stroke-width='6'/%3E%3Ctext x='370' y='172' font-family='sans-serif' font-size='64' font-weight='900' fill='%2330D158' text-anchor='middle'%3E$%3C/text%3E%3C/svg%3E" />
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' width='512' height='512'%3E%3Crect width='512' height='512' rx='115' fill='%230A0E17'/%3E%3Cpath d='M76 250 L256 112 L436 250' fill='none' stroke='%2300F0FF' stroke-width='20' stroke-linecap='round'/%3E%3Ccircle cx='370' cy='150' r='58' fill='%230D2818' stroke='%2330D158' stroke-width='6'/%3E%3Ctext x='370' y='172' font-family='sans-serif' font-size='64' font-weight='900' fill='%2330D158' text-anchor='middle'%3E$%3C/text%3E%3C/svg%3E" />
+  <!-- High-Resolution PNG App Icon Generator for iOS Safari -->
+  <link id="apple-touch-icon-link" rel="apple-touch-icon" sizes="180x180" href="" />
+  <link id="apple-touch-icon-precomposed-link" rel="apple-touch-icon-precomposed" sizes="180x180" href="" />
+  <link id="favicon-link" rel="icon" type="image/png" sizes="180x180" href="" />
+
+  <script>
+    (function generateAppleTouchPngIcon() {
+      try {
+        const size = 512;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Base Dark Slate & Obsidian Gradient
+        const bgGrad = ctx.createLinearGradient(0, 0, size, size);
+        bgGrad.addColorStop(0, '#181C26');
+        bgGrad.addColorStop(0.5, '#0B0F17');
+        bgGrad.addColorStop(1, '#02050B');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, size, size);
+
+        // Inner Radial Glow
+        const radGlow = ctx.createRadialGradient(size / 2, size * 0.42, 30, size / 2, size * 0.45, 260);
+        radGlow.addColorStop(0, 'rgba(0, 240, 255, 0.16)');
+        radGlow.addColorStop(0.6, 'rgba(10, 132, 255, 0.08)');
+        radGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = radGlow;
+        ctx.fillRect(0, 0, size, size);
+
+        // Outer Metallic Cyan Bezel
+        ctx.lineWidth = 8;
+        const bezelGrad = ctx.createLinearGradient(0, 0, size, size);
+        bezelGrad.addColorStop(0, '#3A4252');
+        bezelGrad.addColorStop(0.5, '#1E2530');
+        bezelGrad.addColorStop(1, 'rgba(0, 240, 255, 0.7)');
+        ctx.strokeStyle = bezelGrad;
+        ctx.strokeRect(4, 4, size - 8, size - 8);
+
+        // Ground Foundation Bar
+        ctx.strokeStyle = '#2C3545';
+        ctx.lineWidth = 8;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(76, 386);
+        ctx.lineTo(436, 386);
+        ctx.stroke();
+
+        // Architectural Villa Silhouette
+        ctx.beginPath();
+        ctx.moveTo(108, 386);
+        ctx.lineTo(108, 250);
+        ctx.lineTo(256, 134);
+        ctx.lineTo(404, 250);
+        ctx.lineTo(404, 386);
+        ctx.closePath();
+        ctx.fillStyle = '#0F1624';
+        ctx.fill();
+        ctx.strokeStyle = '#1D2A40';
+        ctx.lineWidth = 5;
+        ctx.stroke();
+
+        // Luminous Dual Roofline (Neon Cyan to Royal Blue)
+        ctx.beginPath();
+        ctx.moveTo(80, 260);
+        ctx.lineTo(256, 124);
+        ctx.lineTo(432, 260);
+        const roofGrad = ctx.createLinearGradient(80, 260, 432, 260);
+        roofGrad.addColorStop(0, '#00F0FF');
+        roofGrad.addColorStop(0.5, '#38BDF8');
+        roofGrad.addColorStop(1, '#0A84FF');
+        ctx.strokeStyle = roofGrad;
+        ctx.lineWidth = 22;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.shadowColor = '#00F0FF';
+        ctx.shadowBlur = 24;
+        ctx.stroke();
+
+        // Reset shadow for inner elements
+        ctx.shadowBlur = 0;
+
+        // Modern Villa Windows
+        ctx.fillStyle = 'rgba(0, 240, 255, 0.2)';
+        ctx.strokeStyle = '#00F0FF';
+        ctx.lineWidth = 3;
+
+        // Left Window
+        ctx.beginPath();
+        ctx.rect(142, 296, 42, 42);
+        ctx.fill();
+        ctx.stroke();
+
+        // Right Window
+        ctx.beginPath();
+        ctx.rect(328, 296, 42, 42);
+        ctx.fill();
+        ctx.stroke();
+
+        // Central Entrance Frame
+        ctx.beginPath();
+        ctx.moveTo(216, 386);
+        ctx.lineTo(216, 290);
+        ctx.arcTo(256, 260, 296, 290, 22);
+        ctx.lineTo(296, 386);
+        ctx.fillStyle = '#060B12';
+        ctx.fill();
+        ctx.strokeStyle = '#00F0FF';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // Glowing Emerald Australian Dollar Badge
+        const badgeX = 372;
+        const badgeY = 154;
+        const badgeR = 64;
+
+        ctx.shadowColor = '#30D158';
+        ctx.shadowBlur = 28;
+        ctx.beginPath();
+        ctx.arc(badgeX, badgeY, badgeR, 0, Math.PI * 2);
+        ctx.fillStyle = '#062816';
+        ctx.fill();
+        ctx.lineWidth = 7;
+        ctx.strokeStyle = '#30D158';
+        ctx.stroke();
+
+        // Australian Dollar Sign inside Badge
+        ctx.shadowColor = '#30D158';
+        ctx.shadowBlur = 12;
+        ctx.fillStyle = '#30D158';
+        ctx.font = '900 70px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('$', badgeX, badgeY + 3);
+
+        // Convert to lossless PNG Data URL
+        const pngDataUrl = canvas.toDataURL('image/png');
+        window.AU_APP_PNG_ICON = pngDataUrl;
+
+        // Synchronously update iOS Safari touch icon tags
+        const appleIcon = document.getElementById('apple-touch-icon-link');
+        const appleIconPre = document.getElementById('apple-touch-icon-precomposed-link');
+        const favicon = document.getElementById('favicon-link');
+
+        if (appleIcon) appleIcon.href = pngDataUrl;
+        if (appleIconPre) appleIconPre.href = pngDataUrl;
+        if (favicon) favicon.href = pngDataUrl;
+      } catch (err) {
+        console.error('Failed to generate PNG touch icon:', err);
+      }
+    })();
+  </script>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -577,7 +726,7 @@
               {/* FAR LEFT: CUSTOM ARCHITECTURAL APP ICON BADGE */}
               <div className="flex items-center space-x-2.5 min-w-0">
                 <img 
-                  src={APP_HERO_ICON_SVG} 
+                  src={window.AU_APP_PNG_ICON || APP_HERO_ICON_SVG} 
                   alt="AU Property Icon" 
                   className="w-9 h-9 rounded-2xl shadow-lg shadow-cyan-950/60 border border-cyan-500/30 shrink-0 object-cover" 
                 />
