@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="AU Property" />
+  <meta name="theme-color" content="#000000" />
+  <title>AU Property Portfolio Tracker</title>
+
+  <!-- Embedded Apple Touch Icon & Favicon SVG -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180' width='180' height='180'><rect width='180' height='180' rx='40' fill='%23121214'/><rect x='4' y='4' width='172' height='172' rx='36' fill='none' stroke='%232C2C2E' stroke-width='2'/><defs><linearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%230A84FF'/><stop offset='100%25' stop-color='%235E5CE6'/></linearGradient><linearGradient id='glow' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%2330D158'/><stop offset='100%25' stop-color='%2322D3EE'/></linearGradient></defs><circle cx='90' cy='90' r='52' fill='%231C1C1E'/><path d='M90 42 L132 78 L122 78 L122 130 C122 133 119 136 116 136 L64 136 C61 136 58 133 58 130 L58 78 L48 78 Z' fill='url(%23grad)'/><path d='M80 136 L80 102 C80 99.5 82 97.5 84.5 97.5 L95.5 97.5 C98 97.5 100 99.5 100 102 L100 136 Z' fill='%23121214'/><path d='M90 62 L74 76 L106 76 Z' fill='%23FFFFFF' opacity='0.25'/><circle cx='128' cy='56' r='14' fill='url(%23glow)'/><text x='128' y='61' font-family='-apple-system,sans-serif' font-size='15' font-weight='900' fill='%23000000' text-anchor='middle'>$</text></svg>" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180' width='180' height='180'><rect width='180' height='180' rx='40' fill='%23121214'/><path d='M90 42 L132 78 L122 78 L122 130 C122 133 119 136 116 136 L64 136 C61 136 58 133 58 130 L58 78 L48 78 Z' fill='%230A84FF'/></svg>" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            iosDark: '#000000',
+            iosCard: '#1C1C1E',
+            iosSub: '#2C2C2E',
+            iosBorder: '#38383A'
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- React 18, React-DOM, Prop-Types, Recharts CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+  <script crossorigin src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+
+  <!-- Babel Standalone for in-browser JSX compilation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* iOS smooth scrolling and safe area padding */
+    body {
+      background-color: #000000;
+      color: #F4F4F5;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      padding-top: env(safe-area-inset-top);
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-black text-zinc-100 min-h-screen">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useMemo, useEffect } = React;
+    const { 
+      ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell 
+    } = window.Recharts || {};
+
+    // --- Embedded Inline Lucide Icons to prevent missing external icon packages ---
+    const IconBase = ({ d, className = "w-4 h-4", strokeWidth = 2, children }) => (
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth={strokeWidth} 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        className={className}
+      >
+        {children ? children : <path d={d} />}
+      </svg>
+    );
+
+    const HomeIcon = (p) => <IconBase {...p}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></IconBase>;
+    const PlusIcon = (p) => <IconBase {...p}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></IconBase>;
+    const CalendarIcon = (p) => <IconBase {...p}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></IconBase>;
+    const ChevronDownIcon = (p) => <IconBase {...p}><polyline points="6 9 12 15 18 9"/></IconBase>;
+    const ChevronRightIcon = (p) => <IconBase {...p}><polyline points="9 18 15 12 9 6"/></IconBase>;
+    const TrendingUpIcon = (p) => <IconBase {...p}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></IconBase>;
+    const TrendingDownIcon = (p) => <IconBase {...p}><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></IconBase>;
+    const ArrowDownRightIcon = (p) => <IconBase {...p}><line x1="7" y1="7" x2="17" y2="17"/><polyline points="17 7 17 17 7 17"/></IconBase>;
+    const ArrowUpRightIcon = (p) => <IconBase {...p}><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></IconBase>;
+    const LandmarkIcon = (p) => <IconBase {...p}><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></IconBase>;
+    const DollarSignIcon = (p) => <IconBase {...p}><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></IconBase>;
+    const BarChart2Icon = (p) => <IconBase {...p}><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></IconBase>;
+    const LineChartIcon = (p) => <IconBase {...p}><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></IconBase>;
+    const GridIcon = (p) => <IconBase {...p}><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></IconBase>;
+    const ReceiptIcon = (p) => <IconBase {...p}><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/></IconBase>;
+    const FileTextIcon = (p) => <IconBase {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></IconBase>;
+    const PieChartIcon = (p) => <IconBase {...p}><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></IconBase>;
+    const TargetIcon = (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></IconBase>;
+    const PaperclipIcon = (p) => <IconBase {...p}><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></IconBase>;
+    const Trash2Icon = (p) => <IconBase {...p}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></IconBase>;
+    const Edit3Icon = (p) => <IconBase {...p}><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></IconBase>;
+    const SearchIcon = (p) => <IconBase {...p}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></IconBase>;
+    const PrinterIcon = (p) => <IconBase {...p}><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></IconBase>;
+    const UploadIcon = (p) => <IconBase {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></IconBase>;
+    const CheckCircle2Icon = (p) => <IconBase {...p}><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></IconBase>;
+
+    // Generate Financial Years out to FY 2039-40
+    const GENERATED_FY_LIST = (() => {
+      const years = [];
+      for (let startYear = 2039; startYear >= 2020; startYear--) {
+        const endYearShort = String(startYear + 1).slice(-2);
+        years.push(`FY ${startYear}-${endYearShort}`);
+      }
+      return years;
+    })();
+
+    // ATO Standard Categories
+    const ATO_INCOME_CATEGORIES = [
+      'Gross Rental Income',
+      'Council Rate Rebates / Refunds',
+      'Insurance Claim Payouts',
+      'Water Reimbursements from Tenant',
+      'Other Rental Related Income'
+    ];
+
+    const ATO_EXPENSE_CATEGORIES = [
+      'Advertising for tenants',
+      'Body corporate fees & charges (Strata)',
+      'Borrowing expenses',
+      'Cleaning',
+      'Council rates',
+      'Capital allowances (depreciation on plant & equipment)',
+      'Capital works deductions (building depreciation)',
+      'Gardening and lawn mowing',
+      'Insurance (building, landlord, contents)',
+      'Interest on loans',
+      'Land tax',
+      'Legal fees',
+      'Pest control',
+      'Property agent fees & commission',
+      'Repairs and maintenance',
+      'Stationery, telephone and postage',
+      'Water charges',
+      'Other rental expenses'
+    ];
+
+    // AU FY Months order (July to June)
+    const AU_FY_MONTHS = [
+      { name: 'Jul', index: 6 },
+      { name: 'Aug', index: 7 },
+      { name: 'Sep', index: 8 },
+      { name: 'Oct', index: 9 },
+      { name: 'Nov', index: 10 },
+      { name: 'Dec', index: 11 },
+      { name: 'Jan', index: 0 },
+      { name: 'Feb', index: 1 },
+      { name: 'Mar', index: 2 },
+      { name: 'Apr', index: 3 },
+      { name: 'May', index: 4 },
+      { name: 'Jun', index: 5 }
+    ];
+
+    const DARK_CHART_COLORS = [
+      '#0A84FF', '#30D158', '#FF9F0A', '#FF453A', '#BF5AF2', 
+      '#5E5CE6', '#64D2FF', '#FFD60A', '#28CD41', '#FF375F'
+    ];
+
+    const SAMPLE_RECEIPT_IMAGE = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='550' viewBox='0 0 400 550'><rect width='400' height='550' fill='%232C2C2E'/><rect x='20' y='20' width='360' height='510' rx='16' fill='%231C1C1E' stroke='%233A3A3C' stroke-width='2'/><text x='40' y='70' fill='%2330D158' font-family='sans-serif' font-size='20' font-weight='bold'>TAX INVOICE / RECEIPT</text><text x='40' y='105' fill='%238E8E93' font-family='sans-serif' font-size='13'>Cronulla Plumbing Services Pty Ltd</text><text x='40' y='125' fill='%238E8E93' font-family='sans-serif' font-size='12'>ABN: 88 123 456 789</text><line x1='40' y1='150' x2='360' y2='150' stroke='%233A3A3C' stroke-width='1.5'/><text x='40' y='180' fill='%23FFFFFF' font-family='sans-serif' font-size='13' font-weight='bold'>Description</text><text x='300' y='180' fill='%23FFFFFF' font-family='sans-serif' font-size='13' font-weight='bold'>Amount</text><text x='40' y='210' fill='%23D1D1D6' font-family='sans-serif' font-size='13'>Hot Water Valve Repair &amp; Service</text><text x='300' y='210' fill='%23FFFFFF' font-family='sans-serif' font-size='13' font-weight='bold'>$320.00</text><text x='40' y='235' fill='%238E8E93' font-family='sans-serif' font-size='11'>Property: 14/22 Surfers Parade, Cronulla</text><line x1='40' y1='270' x2='360' y2='270' stroke='%233A3A3C' stroke-dasharray='4'/><text x='40' y='300' fill='%238E8E93' font-family='sans-serif' font-size='13'>Subtotal:</text><text x='300' y='300' fill='%23FFFFFF' font-family='sans-serif' font-size='13'>$290.91</text><text x='40' y='325' fill='%238E8E93' font-family='sans-serif' font-size='13'>GST (10%):</text><text x='300' y='325' fill='%23FFFFFF' font-family='sans-serif' font-size='13'>$29.09</text><text x='40' y='360' fill='%2330D158' font-family='sans-serif' font-size='16' font-weight='bold'>TOTAL PAID:</text><text x='300' y='360' fill='%2330D158' font-family='sans-serif' font-size='16' font-weight='bold'>$320.00</text><rect x='40' y='410' width='320' height='80' rx='12' fill='%232C2C2E'/><text x='55' y='440' fill='%230A84FF' font-family='sans-serif' font-size='12' font-weight='bold'>✓ VERIFIED ATO TAX RECEIPT</text><text x='55' y='465' fill='%238E8E93' font-family='sans-serif' font-size='11'>Payment Method: Direct Transfer (Ref: #7741)</text></svg>";
+
+    const formatAUD = (amount) => {
+      return new Intl.NumberFormat('en-AU', {
+        style: 'currency',
+        currency: 'AUD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(amount || 0);
+    };
+
+    const formatAUDExact = (amount) => {
+      return new Intl.NumberFormat('en-AU', {
+        style: 'currency',
+        currency: 'AUD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(amount || 0);
+    };
+
+    const formatDateAU = (dateString) => {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return dateString;
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = date.toLocaleString('en-AU', { month: 'short' });
+      const year = date.getFullYear();
+      return `${day} ${month} ${year}`;
+    };
+
+    const getFinancialYear = (dateString) => {
+      if (!dateString) return 'FY 2026-27';
+      const date = new Date(dateString);
+      const month = date.getMonth() + 1;
+      const year = date.getFullYear();
+      if (month >= 7) {
+        const nextYear = String(year + 1).slice(-2);
+        return `FY ${year}-${nextYear}`;
+      } else {
+        const currentYearShort = String(year).slice(-2);
+        return `FY ${year - 1}-${currentYearShort}`;
+      }
+    };
+
+    const calculatePropertyGrowth = (purchasePrice, currentValuation, purchaseDateStr) => {
+      if (!purchasePrice || purchasePrice <= 0 || !currentValuation) {
+        return { totalPercent: 0, percentPerYear: 0, totalGain: 0 };
+      }
+      const totalGain = currentValuation - purchasePrice;
+      const totalPercent = (totalGain / purchasePrice) * 100;
+      const purchaseDate = new Date(purchaseDateStr || '2020-01-01');
+      const now = new Date();
+      const diffTime = Math.abs(now - purchaseDate);
+      const elapsedYears = Math.max(diffTime / (1000 * 60 * 60 * 24 * 365.25), 0.25);
+      const percentPerYear = totalPercent / elapsedYears;
+      return { totalPercent, percentPerYear, totalGain, elapsedYears };
+    };
+
+    const INITIAL_PROPERTIES = [
+      {
+        id: 'prop-1',
+        address: '14/22 Surfers Parade, Cronulla NSW 2230',
+        shortName: 'Cronulla Unit',
+        propertyType: 'Unit / Apartment',
+        purchasePrice: 920000,
+        currentValuation: 1250000,
+        loanBalance: 680000,
+        purchaseDate: '2021-04-10',
+        ownershipShare: 100,
+        currentRent: 950,
+        targetRent: 980,
+        isStrata: true,
+        interestRate: 6.14,
+        monthlyRepayment: 4600
+      },
+      {
+        id: 'prop-2',
+        address: '88 Queen St, Melbourne VIC 3000',
+        shortName: 'Melbourne Townhouse',
+        propertyType: 'Townhouse',
+        purchasePrice: 1050000,
+        currentValuation: 1320000,
+        loanBalance: 720000,
+        purchaseDate: '2020-02-15',
+        ownershipShare: 100,
+        currentRent: 880,
+        targetRent: 920,
+        isStrata: true,
+        interestRate: 5.95,
+        monthlyRepayment: 5100
+      }
+    ];
+
+    const INITIAL_TRANSACTIONS = [
+      { id: 'tx-201', propertyId: 'prop-1', type: 'income', category: 'Gross Rental Income', amount: 4116.66, date: '2026-07-01', financialYear: 'FY 2026-27', vendor: 'Ray White Cronulla', notes: 'Jul Rent Statement', isTaxDeductible: true, attachment: null },
+      { id: 'tx-202', propertyId: 'prop-1', type: 'income', category: 'Gross Rental Income', amount: 4116.66, date: '2026-08-01', financialYear: 'FY 2026-27', vendor: 'Ray White Cronulla', notes: 'Aug Rent Statement', isTaxDeductible: true, attachment: null },
+      { id: 'tx-203', propertyId: 'prop-1', type: 'income', category: 'Gross Rental Income', amount: 4116.66, date: '2026-09-01', financialYear: 'FY 2026-27', vendor: 'Ray White Cronulla', notes: 'Sep Rent Statement', isTaxDeductible: true, attachment: null },
+      { id: 'tx-204', propertyId: 'prop-1', type: 'income', category: 'Gross Rental Income', amount: 4116.66, date: '2026-10-01', financialYear: 'FY 2026-27', vendor: 'Ray White Cronulla', notes: 'Oct Rent Statement', isTaxDeductible: true, attachment: null },
+      { id: 'tx-205', propertyId: 'prop-1', type: 'expense', category: 'Interest on loans', amount: 4250.00, date: '2026-07-15', financialYear: 'FY 2026-27', vendor: 'Macquarie Bank', notes: 'Jul Interest', isTaxDeductible: true, attachment: null },
+      { id: 'tx-206', propertyId: 'prop-1', type: 'expense', category: 'Interest on loans', amount: 4250.00, date: '2026-08-15', financialYear: 'FY 2026-27', vendor: 'Macquarie Bank', notes: 'Aug Interest', isTaxDeductible: true, attachment: null },
+      { id: 'tx-207', propertyId: 'prop-1', type: 'expense', category: 'Interest on loans', amount: 4250.00, date: '2026-09-15', financialYear: 'FY 2026-27', vendor: 'Macquarie Bank', notes: 'Sep Interest', isTaxDeductible: true, attachment: null },
+      { id: 'tx-208', propertyId: 'prop-1', type: 'expense', category: 'Interest on loans', amount: 4250.00, date: '2026-10-15', financialYear: 'FY 2026-27', vendor: 'Macquarie Bank', notes: 'Oct Interest', isTaxDeductible: true, attachment: null },
+      { id: 'tx-209', propertyId: 'prop-1', type: 'expense', category: 'Body corporate fees & charges (Strata)', amount: 1650.00, date: '2026-07-10', financialYear: 'FY 2026-27', vendor: 'Cronulla Strata', notes: 'Q1 Levy Invoice', isTaxDeductible: true, attachment: null },
+      { id: 'tx-210', propertyId: 'prop-1', type: 'expense', category: 'Body corporate fees & charges (Strata)', amount: 1650.00, date: '2026-10-10', financialYear: 'FY 2026-27', vendor: 'Cronulla Strata', notes: 'Q2 Levy Invoice', isTaxDeductible: true, attachment: null },
+      { id: 'tx-211', propertyId: 'prop-1', type: 'expense', category: 'Council rates', amount: 480.00, date: '2026-07-28', financialYear: 'FY 2026-27', vendor: 'Sutherland Shire Council', notes: 'Q1 Rates Notice', isTaxDeductible: true, attachment: null },
+      { id: 'tx-212', propertyId: 'prop-1', type: 'expense', category: 'Property agent fees & commission', amount: 247.00, date: '2026-07-30', financialYear: 'FY 2026-27', vendor: 'Ray White Cronulla', notes: 'Jul Mgmt Fee', isTaxDeductible: true, attachment: null },
+      { 
+        id: 'tx-214', 
+        propertyId: 'prop-1', 
+        type: 'expense', 
+        category: 'Repairs and maintenance', 
+        amount: 320.00, 
+        date: '2026-09-12', 
+        financialYear: 'FY 2026-27', 
+        vendor: 'Cronulla Plumbing', 
+        notes: 'Hot water valve fix receipt', 
+        isTaxDeductible: true,
+        attachment: {
+          name: 'Plumbing_Receipt_Sep2026.png',
+          type: 'image/png',
+          dataUrl: SAMPLE_RECEIPT_IMAGE
+        }
+      },
+      { id: 'tx-215', propertyId: 'prop-2', type: 'income', category: 'Gross Rental Income', amount: 3813.33, date: '2026-07-02', financialYear: 'FY 2026-27', vendor: 'Nelson Alexander CBD', notes: 'Jul Rent Statement', isTaxDeductible: true, attachment: null },
+      { id: 'tx-218', propertyId: 'prop-2', type: 'expense', category: 'Interest on loans', amount: 4600.00, date: '2026-07-18', financialYear: 'FY 2026-27', vendor: 'CBA Mortgage', notes: 'Jul Interest Statement', isTaxDeductible: true, attachment: null },
+      { id: 'tx-220', propertyId: 'prop-2', type: 'expense', category: 'Insurance (building, landlord, contents)', amount: 1450.00, date: '2026-07-05', financialYear: 'FY 2026-27', vendor: 'Terri Scheer', notes: 'Annual Landlord Policy', isTaxDeductible: true, attachment: null },
+      { id: 'tx-future-1', propertyId: 'prop-1', type: 'income', category: 'Gross Rental Income', amount: 7200.00, date: '2039-07-01', financialYear: 'FY 2039-40', vendor: 'Forecast Tenant', notes: 'FY 2039-40 Long-term Projected Rent', isTaxDeductible: true, attachment: null }
+    ];
+
+    function App() {
+      const [activeTab, setActiveTab] = useState('dashboard');
+      const [properties, setProperties] = useState(INITIAL_PROPERTIES);
+      const [transactions, setTransactions] = useState(INITIAL_TRANSACTIONS);
+      const [selectedFY, setSelectedFY] = useState('FY 2026-27');
+      const [selectedPropertyId, setSelectedPropertyId] = useState('ALL');
+      const [cashflowChartType, setCashflowChartType] = useState('column');
+
+      // Modals
+      const [isAddTxSheetOpen, setIsAddTxSheetOpen] = useState(false);
+      const [isAddPropSheetOpen, setIsAddPropSheetOpen] = useState(false);
+      const [editingTx, setEditingTx] = useState(null);
+      const [previewAttachment, setPreviewAttachment] = useState(null);
+
+      // Filter States
+      const [txSearch, setTxSearch] = useState('');
+      const [txTypeSegment, setTxTypeSegment] = useState('ALL');
+
+      // Form States
+      const [txForm, setTxForm] = useState({
+        propertyId: '',
+        type: 'expense',
+        category: ATO_EXPENSE_CATEGORIES[0],
+        amount: '',
+        date: new Date().toISOString().split('T')[0],
+        vendor: '',
+        notes: '',
+        isTaxDeductible: true,
+        attachment: null
+      });
+
+      const [propForm, setPropForm] = useState({
+        address: '',
+        shortName: '',
+        propertyType: 'Unit / Apartment',
+        purchasePrice: '',
+        currentValuation: '',
+        loanBalance: '',
+        purchaseDate: new Date().toISOString().split('T')[0],
+        ownershipShare: 100,
+        currentRent: '',
+        targetRent: '',
+        isStrata: true,
+        interestRate: '',
+        monthlyRepayment: ''
+      });
+
+      useEffect(() => {
+        if (properties.length > 0 && !txForm.propertyId) {
+          setTxForm(prev => ({ ...prev, propertyId: properties[0].id }));
+        }
+      }, [properties]);
+
+      const availableFYs = useMemo(() => {
+        const set = new Set([...GENERATED_FY_LIST]);
+        transactions.forEach(t => set.add(t.financialYear));
+        return Array.from(set).sort().reverse();
+      }, [transactions]);
+
+      const handleStepFY = (direction) => {
+        const cleanList = availableFYs.filter(fy => fy !== 'ALL');
+        const currentIndex = cleanList.indexOf(selectedFY);
+        if (direction === 'prev' && currentIndex < cleanList.length - 1) {
+          setSelectedFY(cleanList[currentIndex + 1]);
+        } else if (direction === 'next' && currentIndex > 0) {
+          setSelectedFY(cleanList[currentIndex - 1]);
+        }
+      };
+
+      const handleFileUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          setTxForm(prev => ({
+            ...prev,
+            attachment: { name: file.name, type: file.type, dataUrl: reader.result }
+          }));
+        };
+        reader.readAsDataURL(file);
+      };
+
+      const handleSaveTransaction = (e) => {
+        e.preventDefault();
+        if (!txForm.amount || isNaN(txForm.amount) || !txForm.propertyId) return;
+        const computedFY = getFinancialYear(txForm.date);
+
+        if (editingTx) {
+          setTransactions(prev => prev.map(t => t.id === editingTx.id ? {
+            ...txForm,
+            id: editingTx.id,
+            amount: parseFloat(txForm.amount),
+            financialYear: computedFY
+          } : t));
+        } else {
+          const newTx = {
+            ...txForm,
+            id: `tx-${Date.now()}`,
+            amount: parseFloat(txForm.amount),
+            financialYear: computedFY
+          };
+          setTransactions(prev => [newTx, ...prev]);
+        }
+        setIsAddTxSheetOpen(false);
+        setEditingTx(null);
+        setTxForm({
+          propertyId: properties[0]?.id || '',
+          type: 'expense',
+          category: ATO_EXPENSE_CATEGORIES[0],
+          amount: '',
+          date: new Date().toISOString().split('T')[0],
+          vendor: '',
+          notes: '',
+          isTaxDeductible: true,
+          attachment: null
+        });
+      };
+
+      const handleSaveProperty = (e) => {
+        e.preventDefault();
+        if (!propForm.address) return;
+        const pPrice = parseFloat(propForm.purchasePrice) || 0;
+        const cVal = parseFloat(propForm.currentValuation) || pPrice;
+        const lBal = parseFloat(propForm.loanBalance) || 0;
+        const cRent = parseFloat(propForm.currentRent) || 0;
+        const tRent = parseFloat(propForm.targetRent) || cRent;
+
+        const newProp = {
+          id: `prop-${Date.now()}`,
+          address: propForm.address,
+          shortName: propForm.shortName || propForm.address.split(',')[0],
+          propertyType: propForm.propertyType,
+          purchasePrice: pPrice,
+          currentValuation: cVal,
+          loanBalance: lBal,
+          purchaseDate: propForm.purchaseDate,
+          ownershipShare: parseFloat(propForm.ownershipShare) || 100,
+          currentRent: cRent,
+          targetRent: tRent,
+          isStrata: propForm.isStrata,
+          interestRate: parseFloat(propForm.interestRate) || 0,
+          monthlyRepayment: parseFloat(propForm.monthlyRepayment) || 0
+        };
+
+        setProperties(prev => [...prev, newProp]);
+        setIsAddPropSheetOpen(false);
+      };
+
+      const metrics = useMemo(() => {
+        const activeTxs = transactions.filter(t => {
+          const matchesFY = selectedFY === 'ALL' || t.financialYear === selectedFY;
+          const matchesProperty = selectedPropertyId === 'ALL' || t.propertyId === selectedPropertyId;
+          return matchesFY && matchesProperty;
+        });
+
+        let totalIncome = 0;
+        let totalExpenses = 0;
+        let taxDeductibleExpenses = 0;
+
+        activeTxs.forEach(t => {
+          if (t.type === 'income') totalIncome += t.amount;
+          else {
+            totalExpenses += t.amount;
+            if (t.isTaxDeductible) taxDeductibleExpenses += t.amount;
+          }
+        });
+
+        const netCashFlow = totalIncome - totalExpenses;
+        const filteredProps = selectedPropertyId === 'ALL' ? properties : properties.filter(p => p.id === selectedPropertyId);
+        const totalValuation = filteredProps.reduce((sum, p) => sum + (p.currentValuation || p.purchasePrice || 0), 0);
+        const totalLoans = filteredProps.reduce((sum, p) => sum + (p.loanBalance || 0), 0);
+        const totalEquity = Math.max(totalValuation - totalLoans, 0);
+        const totalLVR = totalValuation > 0 ? (totalLoans / totalValuation) * 100 : 0;
+
+        return {
+          totalIncome,
+          totalExpenses,
+          netCashFlow,
+          taxDeductibleExpenses,
+          totalValuation,
+          totalLoans,
+          totalEquity,
+          totalLVR
+        };
+      }, [transactions, properties, selectedFY, selectedPropertyId]);
+
+      // Property LVR chart breakdown
+      const propertyLvrData = useMemo(() => {
+        const filteredProps = selectedPropertyId === 'ALL' ? properties : properties.filter(p => p.id === selectedPropertyId);
+        return filteredProps.map(p => {
+          const val = p.currentValuation || p.purchasePrice || 0;
+          const loan = p.loanBalance || 0;
+          const equity = Math.max(val - loan, 0);
+          const lvr = val > 0 ? ((loan / val) * 100).toFixed(1) : 0;
+          return {
+            name: p.shortName || p.address.split(',')[0],
+            Equity: equity,
+            Loan: loan,
+            Valuation: val,
+            LVR: lvr
+          };
+        });
+      }, [properties, selectedPropertyId]);
+
+      // Matrix computation
+      const matrixData = useMemo(() => {
+        const incomeMap = {};
+        const expenseMap = {};
+        const attachmentMap = {};
+        ATO_INCOME_CATEGORIES.forEach(cat => { incomeMap[cat] = new Array(12).fill(0); });
+        ATO_EXPENSE_CATEGORIES.forEach(cat => { expenseMap[cat] = new Array(12).fill(0); });
+        const monthlyTotalIncome = new Array(12).fill(0);
+        const monthlyTotalExpenses = new Array(12).fill(0);
+
+        const activeTxs = transactions.filter(t => {
+          const matchesFY = selectedFY === 'ALL' || t.financialYear === selectedFY;
+          const matchesProperty = selectedPropertyId === 'ALL' || t.propertyId === selectedPropertyId;
+          return matchesFY && matchesProperty;
+        });
+
+        activeTxs.forEach(t => {
+          if (!t.date) return;
+          const date = new Date(t.date);
+          const mIdx = date.getMonth();
+          const fyColIdx = (mIdx >= 6) ? mIdx - 6 : mIdx + 6;
+
+          if (t.type === 'income') {
+            if (!incomeMap[t.category]) incomeMap[t.category] = new Array(12).fill(0);
+            incomeMap[t.category][fyColIdx] += t.amount;
+            monthlyTotalIncome[fyColIdx] += t.amount;
+          } else {
+            if (!expenseMap[t.category]) expenseMap[t.category] = new Array(12).fill(0);
+            expenseMap[t.category][fyColIdx] += t.amount;
+            monthlyTotalExpenses[fyColIdx] += t.amount;
+          }
+
+          if (t.attachment) {
+            attachmentMap[`${t.category}_${fyColIdx}`] = t.attachment;
+          }
+        });
+
+        const monthlyNetCashflow = monthlyTotalIncome.map((inc, i) => inc - monthlyTotalExpenses[i]);
+        return { incomeMap, expenseMap, attachmentMap, monthlyTotalIncome, monthlyTotalExpenses, monthlyNetCashflow };
+      }, [transactions, selectedFY, selectedPropertyId]);
+
+      // Monthly cashflow data for chart
+      const monthlyData = useMemo(() => {
+        const months = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+        return months.map((m, idx) => ({
+          month: m,
+          Income: matrixData.monthlyTotalIncome[idx],
+          Expense: matrixData.monthlyTotalExpenses[idx]
+        }));
+      }, [matrixData]);
+
+      // Filtered transactions for Activity tab
+      const filteredTransactions = useMemo(() => {
+        return transactions.filter(t => {
+          const matchesFY = selectedFY === 'ALL' || t.financialYear === selectedFY;
+          const matchesProperty = selectedPropertyId === 'ALL' || t.propertyId === selectedPropertyId;
+          const matchesType = txTypeSegment === 'ALL' || t.type === txTypeSegment;
+          const matchesSearch = txSearch === '' || 
+            (t.vendor && t.vendor.toLowerCase().includes(txSearch.toLowerCase())) ||
+            (t.notes && t.notes.toLowerCase().includes(txSearch.toLowerCase())) ||
+            t.category.toLowerCase().includes(txSearch.toLowerCase());
+          return matchesFY && matchesProperty && matchesType && matchesSearch;
+        });
+      }, [transactions, selectedFY, selectedPropertyId, txTypeSegment, txSearch]);
+
+      return (
+        <div className="min-h-screen bg-black text-zinc-100 flex flex-col pb-28 select-none">
+          
+          {/* iOS TOP HEADER */}
+          <header className="sticky top-0 z-30 bg-[#1C1C1E]/85 backdrop-blur-xl border-b border-zinc-800/80 pt-3 pb-2.5 px-4 shadow-sm">
+            <div className="max-w-md mx-auto flex items-center justify-between gap-2">
+              {/* FAR LEFT: ILLUMINATED HOUSE BADGE */}
+              <div className="flex items-center space-x-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center shadow-md shadow-blue-900/40 border border-blue-400/30 shrink-0">
+                  <HomeIcon className="w-4 h-4 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <h1 className="text-sm font-bold leading-tight text-white truncate">
+                    Property Tracker
+                  </h1>
+                  <p className="text-[10px] text-zinc-400 font-medium truncate">ATO Compliant • AU Financials</p>
+                </div>
+              </div>
+
+              {/* RIGHT SIDE: '+' BUTTON & TIGHTENED FY SELECTOR */}
+              <div className="flex items-center space-x-1.5 shrink-0">
+                <button
+                  onClick={() => { setEditingTx(null); setIsAddTxSheetOpen(true); }}
+                  title="Log New Activity"
+                  className="w-6 h-6 rounded-full bg-blue-600 hover:bg-blue-500 active:scale-95 text-white flex items-center justify-center shadow-sm border border-blue-400/40 transition-all shrink-0"
+                >
+                  <PlusIcon className="w-3.5 h-3.5" />
+                </button>
+
+                <div className="flex items-center bg-[#2C2C2E] rounded-full px-1 py-0.5 border border-zinc-700/60 shadow-inner">
+                  <button
+                    onClick={() => handleStepFY('prev')}
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-zinc-400 hover:text-white transition-colors text-xs font-bold shrink-0"
+                  >
+                    ‹
+                  </button>
+                  <div className="relative flex items-center px-0.5">
+                    <CalendarIcon className="w-2.5 h-2.5 mr-0.5 text-blue-400 pointer-events-none shrink-0" />
+                    <select 
+                      value={selectedFY} 
+                      onChange={(e) => setSelectedFY(e.target.value)}
+                      className="bg-transparent text-[10px] font-bold text-blue-400 appearance-none focus:outline-none pr-2.5 cursor-pointer py-0.5 max-w-[82px] truncate"
+                    >
+                      {availableFYs.map(fy => (
+                        <option key={fy} value={fy} className="bg-[#1C1C1E] text-white">{fy}</option>
+                      ))}
+                      <option value="ALL" className="bg-[#1C1C1E] text-white">All FY Years</option>
+                    </select>
+                    <ChevronDownIcon className="w-2 h-2 text-blue-400 pointer-events-none -ml-2 shrink-0" />
+                  </div>
+                  <button
+                    onClick={() => handleStepFY('next')}
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-zinc-400 hover:text-white transition-colors text-xs font-bold shrink-0"
+                  >
+                    ›
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* PROPERTY FILTER */}
+            <div className="max-w-md mx-auto mt-2.5 overflow-x-auto no-scrollbar pb-0.5">
+              <div className="flex items-center space-x-2 min-w-max">
+                <button
+                  onClick={() => setSelectedPropertyId('ALL')}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+                    selectedPropertyId === 'ALL'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'bg-[#2C2C2E] text-zinc-400 hover:text-zinc-200 border border-zinc-800'
+                  }`}
+                >
+                  All Portfolio
+                </button>
+                {properties.map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => setSelectedPropertyId(p.id)}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+                      selectedPropertyId === p.id
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'bg-[#2C2C2E] text-zinc-400 hover:text-zinc-200 border border-zinc-800'
+                    }`}
+                  >
+                    {p.shortName || p.address.split(',')[0]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </header>
+
+          {/* MAIN CONTAINER */}
+          <main className="flex-1 max-w-md w-full mx-auto px-4 pt-4 space-y-4">
+
+            {/* TAB 1: DASHBOARD */}
+            {activeTab === 'dashboard' && (
+              <div className="space-y-4">
+                {/* Net Operating Cashflow Card */}
+                <div className="bg-[#1C1C1E] rounded-3xl p-5 border border-zinc-800 shadow-lg space-y-4">
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                    <span>Net Operating Cashflow ({selectedFY})</span>
+                    <span className="text-blue-400 font-bold">{selectedPropertyId === 'ALL' ? 'Total Portfolio' : 'Single Asset'}</span>
+                  </div>
+
+                  <div className="flex items-baseline justify-between">
+                    <div>
+                      <div className={`text-3xl font-black tracking-tight ${metrics.netCashFlow >= 0 ? 'text-white' : 'text-rose-400'}`}>
+                        {formatAUDExact(metrics.netCashFlow)}
+                      </div>
+                      <div className="text-xs text-zinc-400 font-medium mt-0.5">Operating Position</div>
+                    </div>
+
+                    <div className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 ${
+                      metrics.netCashFlow >= 0 ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/50' : 'bg-rose-950/80 text-rose-400 border border-rose-800/50'
+                    }`}>
+                      {metrics.netCashFlow >= 0 ? <TrendingUpIcon className="w-3.5 h-3.5" /> : <TrendingDownIcon className="w-3.5 h-3.5" />}
+                      {metrics.netCashFlow >= 0 ? 'Positively Geared' : 'Negatively Geared'}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-zinc-800">
+                    <div className="bg-[#2C2C2E]/70 p-3 rounded-2xl border border-zinc-800">
+                      <div className="text-[11px] font-medium text-zinc-400 flex items-center gap-1">
+                        <ArrowDownRightIcon className="w-3.5 h-3.5 text-emerald-400" /> Rental Income
+                      </div>
+                      <div className="text-base font-bold text-white mt-1">{formatAUD(metrics.totalIncome)}</div>
+                    </div>
+                    <div className="bg-[#2C2C2E]/70 p-3 rounded-2xl border border-zinc-800">
+                      <div className="text-[11px] font-medium text-zinc-400 flex items-center gap-1">
+                        <ArrowUpRightIcon className="w-3.5 h-3.5 text-rose-400" /> Total Expenses
+                      </div>
+                      <div className="text-base font-bold text-white mt-1">{formatAUD(metrics.totalExpenses)}</div>
+                    </div>
+                  </div>
+
+                  <div className="bg-emerald-950/30 border border-emerald-800/60 rounded-2xl p-3 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2Icon className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span className="font-semibold text-emerald-300">ATO Deductible Expenses</span>
+                    </div>
+                    <span className="font-extrabold text-emerald-400">{formatAUD(metrics.taxDeductibleExpenses)}</span>
+                  </div>
+                </div>
+
+                {/* LVR & Equity Breakdown Card */}
+                <div className="bg-[#1C1C1E] rounded-3xl p-5 border border-zinc-800 shadow-lg space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                        <LandmarkIcon className="w-4 h-4 text-cyan-400" /> Portfolio Equity & LVR
+                      </h3>
+                      <p className="text-[11px] text-zinc-400">Asset values vs Mortgages</p>
+                    </div>
+                    <div className="bg-purple-950/80 border border-purple-800/60 text-purple-300 text-xs font-black px-2.5 py-1 rounded-full">
+                      LVR: {metrics.totalLVR.toFixed(1)}%
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="bg-[#2C2C2E]/80 p-3 rounded-2xl border border-zinc-800">
+                      <span className="text-[10px] font-semibold text-cyan-400 uppercase tracking-wider block">Net Portfolio Equity</span>
+                      <span className="text-base font-black text-white mt-0.5 block">{formatAUD(metrics.totalEquity)}</span>
+                    </div>
+                    <div className="bg-[#2C2C2E]/80 p-3 rounded-2xl border border-zinc-800">
+                      <span className="text-[10px] font-semibold text-purple-400 uppercase tracking-wider block">Total Debt (Loans)</span>
+                      <span className="text-base font-black text-white mt-0.5 block">{formatAUD(metrics.totalLoans)}</span>
+                    </div>
+                  </div>
+
+                  {ResponsiveContainer && (
+                    <div className="h-44 w-full pt-1">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={propertyLvrData} margin={{ top: 10, right: 0, left: -25, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2C2C2E" />
+                          <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#8E8E93' }} />
+                          <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#8E8E93' }} tickFormatter={(val) => `$${val/1000}k`} />
+                          <Tooltip 
+                            formatter={(val, name) => [formatAUD(val), name]}
+                            contentStyle={{ backgroundColor: '#2C2C2E', borderRadius: '12px', border: '1px solid #3A3A3C', color: '#FFF', fontSize: '11px' }}
+                          />
+                          <Bar dataKey="Equity" stackId="a" fill="#22D3EE" barSize={20} />
+                          <Bar dataKey="Loan" stackId="a" fill="#A855F7" radius={[4, 4, 0, 0]} barSize={20} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+
+                {/* Monthly Income vs Expense Chart (Interchangeable Column / Line) */}
+                <div className="bg-[#1C1C1E] rounded-3xl p-5 border border-zinc-800 shadow-lg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-bold text-white">Monthly Cashflow</h3>
+                      <p className="text-[11px] text-zinc-400">AU Financial Year ({selectedFY})</p>
+                    </div>
+
+                    <div className="bg-[#2C2C2E] p-0.5 rounded-xl flex items-center border border-zinc-700">
+                      <button
+                        onClick={() => setCashflowChartType('column')}
+                        className={`px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all ${
+                          cashflowChartType === 'column' ? 'bg-blue-600 text-white shadow-sm' : 'text-zinc-400'
+                        }`}
+                      >
+                        <BarChart2Icon className="w-3 h-3" /> Column
+                      </button>
+                      <button
+                        onClick={() => setCashflowChartType('line')}
+                        className={`px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all ${
+                          cashflowChartType === 'line' ? 'bg-blue-600 text-white shadow-sm' : 'text-zinc-400'
+                        }`}
+                      >
+                        <LineChartIcon className="w-3 h-3" /> Line
+                      </button>
+                    </div>
+                  </div>
+
+                  {ResponsiveContainer && (
+                    <div className="h-44 w-full pt-1">
+                      <ResponsiveContainer width="100%" height="100%">
+                        {cashflowChartType === 'column' ? (
+                          <BarChart data={monthlyData} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2C2C2E" />
+                            <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#8E8E93' }} />
+                            <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#8E8E93' }} tickFormatter={(val) => `$${val}`} />
+                            <Tooltip 
+                              formatter={(val) => formatAUD(val)}
+                              contentStyle={{ backgroundColor: '#2C2C2E', borderRadius: '12px', border: '1px solid #3A3A3C', color: '#FFF', fontSize: '11px' }}
+                            />
+                            <Bar dataKey="Income" fill="#30D158" radius={[3, 3, 0, 0]} barSize={10} />
+                            <Bar dataKey="Expense" fill="#FF453A" radius={[3, 3, 0, 0]} barSize={10} />
+                          </BarChart>
+                        ) : (
+                          <LineChart data={monthlyData} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2C2C2E" />
+                            <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#8E8E93' }} />
+                            <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#8E8E93' }} tickFormatter={(val) => `$${val}`} />
+                            <Tooltip 
+                              formatter={(val) => formatAUD(val)}
+                              contentStyle={{ backgroundColor: '#2C2C2E', borderRadius: '12px', border: '1px solid #3A3A3C', color: '#FFF', fontSize: '11px' }}
+                            />
+                            <Line type="monotone" dataKey="Income" stroke="#30D158" strokeWidth={2.5} dot={{ r: 3 }} />
+                            <Line type="monotone" dataKey="Expense" stroke="#FF453A" strokeWidth={2.5} dot={{ r: 3 }} />
+                          </LineChart>
+                        )}
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: PROPERTIES */}
+            {activeTab === 'properties' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between px-1">
+                  <div>
+                    <h2 className="text-lg font-extrabold text-white">Investment Properties</h2>
+                    <p className="text-xs text-zinc-400">{properties.length} Active Asset Holdings</p>
+                  </div>
+                  <button
+                    onClick={() => setIsAddPropSheetOpen(true)}
+                    className="bg-blue-600 active:bg-blue-700 text-white px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm"
+                  >
+                    <PlusIcon className="w-3.5 h-3.5" /> Add Property
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {properties.map(p => {
+                    const growth = calculatePropertyGrowth(p.purchasePrice, p.currentValuation, p.purchaseDate);
+                    const rentProgress = p.targetRent > 0 ? Math.min((p.currentRent / p.targetRent) * 100, 100) : 100;
+                    const propVal = p.currentValuation || p.purchasePrice || 0;
+                    const propLoan = p.loanBalance || 0;
+                    const propEquity = Math.max(propVal - propLoan, 0);
+                    const propLVR = propVal > 0 ? ((propLoan / propVal) * 100).toFixed(1) : 0;
+
+                    return (
+                      <div key={p.id} className="bg-[#1C1C1E] rounded-3xl p-5 border border-zinc-800 shadow-lg space-y-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl bg-blue-950/80 text-blue-400 border border-blue-800/50 flex items-center justify-center shrink-0">
+                            <HomeIcon className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-bold text-white leading-tight">{p.address}</h3>
+                            <p className="text-[10px] text-zinc-400 font-medium mt-0.5">
+                              {p.propertyType} • Purchased {formatDateAU(p.purchaseDate)}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Valuation & Capital Growth Metrics */}
+                        <div className="bg-[#2C2C2E]/80 rounded-2xl p-3 border border-zinc-800 space-y-2.5">
+                          <div className="grid grid-cols-3 gap-1.5 text-xs text-center">
+                            <div className="bg-[#1C1C1E] p-2 rounded-xl border border-zinc-800">
+                              <span className="text-[9px] font-semibold text-zinc-400 block uppercase">Purchase</span>
+                              <span className="font-extrabold text-white text-xs">{formatAUD(p.purchasePrice)}</span>
+                            </div>
+                            <div className="bg-[#1C1C1E] p-2 rounded-xl border border-zinc-800">
+                              <span className="text-[9px] font-semibold text-zinc-400 block uppercase">Valuation</span>
+                              <span className="font-extrabold text-white text-xs">{formatAUD(p.currentValuation)}</span>
+                            </div>
+                            <div className="bg-[#1C1C1E] p-2 rounded-xl border border-zinc-800">
+                              <span className="text-[9px] font-semibold text-purple-400 block uppercase">Mortgage</span>
+                              <span className="font-extrabold text-purple-300 text-xs">{formatAUD(p.loanBalance)}</span>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="bg-[#1C1C1E] p-2.5 rounded-xl border border-zinc-800 flex items-center gap-2">
+                              <div className="p-1 rounded-lg bg-emerald-950 text-emerald-400 shrink-0">
+                                <TrendingUpIcon className="w-3.5 h-3.5" />
+                              </div>
+                              <div>
+                                <div className="text-[9px] text-zinc-400 font-medium">Gain / Year</div>
+                                <div className="font-extrabold text-emerald-400 text-xs">
+                                  +{growth.percentPerYear.toFixed(1)}% <span className="text-[9px] text-zinc-400">/ yr</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="bg-[#1C1C1E] p-2.5 rounded-xl border border-zinc-800 flex items-center gap-2">
+                              <div className="p-1 rounded-lg bg-cyan-950 text-cyan-400 shrink-0">
+                                <LandmarkIcon className="w-3.5 h-3.5" />
+                              </div>
+                              <div>
+                                <div className="text-[9px] text-zinc-400 font-medium">Net Equity (LVR)</div>
+                                <div className="font-extrabold text-cyan-400 text-xs">
+                                  {formatAUD(propEquity)} <span className="text-[9px] text-purple-300">({propLVR}%)</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Current Rent directly ABOVE Rent Target */}
+                        <div className="bg-[#2C2C2E]/80 rounded-2xl p-3 border border-zinc-800 space-y-2">
+                          <div className="grid grid-cols-2 gap-2 pt-1">
+                            <div className="bg-[#1C1C1E] p-2.5 rounded-xl border border-zinc-800/80">
+                              <div className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider flex items-center justify-between">
+                                <span>Current Rent</span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                              </div>
+                              <div className="text-base font-black text-white mt-0.5">${p.currentRent} <span className="text-[10px] text-zinc-400 font-normal">/ wk</span></div>
+                            </div>
+
+                            <div className="bg-[#1C1C1E] p-2.5 rounded-xl border border-zinc-800/80">
+                              <div className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider flex items-center justify-between">
+                                <span>Rent Target</span>
+                                <TargetIcon className="w-3 h-3 text-amber-400" />
+                              </div>
+                              <div className="text-base font-black text-white mt-0.5">${p.targetRent} <span className="text-[10px] text-zinc-400 font-normal">/ wk</span></div>
+                            </div>
+                          </div>
+
+                          <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden mt-1">
+                            <div 
+                              className="bg-gradient-to-r from-emerald-500 to-blue-500 h-full transition-all duration-500"
+                              style={{ width: `${rentProgress}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: MATRIX CALENDAR */}
+            {activeTab === 'matrix' && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between px-1">
+                  <div>
+                    <h2 className="text-lg font-extrabold text-white flex items-center gap-2">
+                      <GridIcon className="w-5 h-5 text-blue-400" /> Matrix Calendar
+                    </h2>
+                    <p className="text-xs text-zinc-400">Monthly breakdown for {selectedFY}</p>
+                  </div>
+                  <div className="text-[10px] text-zinc-400 bg-[#1C1C1E] px-2.5 py-1 rounded-full border border-zinc-800 font-semibold">
+                    👈 Scroll table
+                  </div>
+                </div>
+
+                <div className="bg-[#1C1C1E] rounded-3xl border border-zinc-800 shadow-xl overflow-hidden">
+                  <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-700">
+                    <table className="w-full text-left border-collapse text-xs min-w-[850px]">
+                      <thead>
+                        <tr className="bg-[#2C2C2E] border-b border-zinc-800 text-zinc-300 font-bold">
+                          <th className="p-3 sticky left-0 bg-[#2C2C2E] z-20 min-w-[180px] border-r border-zinc-800">
+                            Category / ATO Item
+                          </th>
+                          {AU_FY_MONTHS.map(m => (
+                            <th key={m.name} className="p-2.5 text-center min-w-[65px]">{m.name}</th>
+                          ))}
+                          <th className="p-3 text-right bg-[#3A3A3C] text-blue-400 font-black min-w-[95px]">
+                            Full {selectedFY.split(' ')[1] || 'FY'}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-800/80">
+                        {/* Income Header */}
+                        <tr className="bg-emerald-950/40 text-emerald-400 font-bold text-[11px] uppercase tracking-wider">
+                          <td colSpan={14} className="p-2 pl-3">1. Income Categories</td>
+                        </tr>
+                        {ATO_INCOME_CATEGORIES.map(category => {
+                          const monthlyVals = matrixData.incomeMap[category] || new Array(12).fill(0);
+                          const rowTotal = monthlyVals.reduce((a, b) => a + b, 0);
+                          return (
+                            <tr key={category} className="hover:bg-zinc-800/40">
+                              <td className="p-2.5 sticky left-0 bg-[#1C1C1E] z-10 border-r border-zinc-800 font-medium text-zinc-200 text-[11px] truncate max-w-[180px]">
+                                {category}
+                              </td>
+                              {monthlyVals.map((val, idx) => (
+                                <td key={idx} className="p-2 text-center text-zinc-300 text-[11px]">
+                                  {val > 0 ? `$${val.toLocaleString('en-AU', { maximumFractionDigits: 0 })}` : '-'}
+                                </td>
+                              ))}
+                              <td className="p-2.5 text-right font-bold text-emerald-400 bg-zinc-900/60 text-[11px]">
+                                {rowTotal > 0 ? formatAUD(rowTotal) : '-'}
+                              </td>
+                            </tr>
+                          );
+                        })}
+
+                        {/* Income Totals */}
+                        <tr className="bg-emerald-950/70 text-emerald-300 font-extrabold border-t-2 border-emerald-800/60 text-[11px]">
+                          <td className="p-2.5 sticky left-0 bg-[#0F291E] z-10 border-r border-zinc-800">TOTAL INCOME</td>
+                          {matrixData.monthlyTotalIncome.map((tot, idx) => (
+                            <td key={idx} className="p-2 text-center">{tot > 0 ? `$${tot.toLocaleString('en-AU', { maximumFractionDigits: 0 })}` : '$0'}</td>
+                          ))}
+                          <td className="p-2.5 text-right text-emerald-400 bg-emerald-900/80 font-black text-xs">
+                            {formatAUD(matrixData.monthlyTotalIncome.reduce((a, b) => a + b, 0))}
+                          </td>
+                        </tr>
+
+                        {/* Expense Header */}
+                        <tr className="bg-rose-950/40 text-rose-400 font-bold text-[11px] uppercase tracking-wider">
+                          <td colSpan={14} className="p-2 pl-3">2. ATO Expenses (Schedule Item 21)</td>
+                        </tr>
+                        {ATO_EXPENSE_CATEGORIES.map(category => {
+                          const monthlyVals = matrixData.expenseMap[category] || new Array(12).fill(0);
+                          const rowTotal = monthlyVals.reduce((a, b) => a + b, 0);
+                          if (rowTotal === 0) return null;
+                          return (
+                            <tr key={category} className="hover:bg-zinc-800/40">
+                              <td className="p-2.5 sticky left-0 bg-[#1C1C1E] z-10 border-r border-zinc-800 font-medium text-zinc-300 text-[11px] truncate max-w-[180px]">
+                                {category}
+                              </td>
+                              {monthlyVals.map((val, idx) => (
+                                <td key={idx} className="p-2 text-center text-zinc-300 text-[11px]">
+                                  {val > 0 ? `$${val.toLocaleString('en-AU', { maximumFractionDigits: 0 })}` : '-'}
+                                </td>
+                              ))}
+                              <td className="p-2.5 text-right font-bold text-rose-400 bg-zinc-900/60 text-[11px]">
+                                {rowTotal > 0 ? formatAUD(rowTotal) : '-'}
+                              </td>
+                            </tr>
+                          );
+                        })}
+
+                        {/* Expense Totals */}
+                        <tr className="bg-rose-950/70 text-rose-300 font-extrabold border-t-2 border-rose-800/60 text-[11px]">
+                          <td className="p-2.5 sticky left-0 bg-[#2D1217] z-10 border-r border-zinc-800">TOTAL EXPENSES</td>
+                          {matrixData.monthlyTotalExpenses.map((tot, idx) => (
+                            <td key={idx} className="p-2 text-center">{tot > 0 ? `$${tot.toLocaleString('en-AU', { maximumFractionDigits: 0 })}` : '$0'}</td>
+                          ))}
+                          <td className="p-2.5 text-right text-rose-400 bg-rose-900/80 font-black text-xs">
+                            {formatAUD(matrixData.monthlyTotalExpenses.reduce((a, b) => a + b, 0))}
+                          </td>
+                        </tr>
+
+                        {/* Net Cashflow Row */}
+                        <tr className="bg-[#2C2C2E] text-white font-black text-xs border-t-2 border-blue-500">
+                          <td className="p-3 sticky left-0 bg-[#2C2C2E] z-10 border-r border-zinc-800 text-blue-400">NET CASHFLOW</td>
+                          {matrixData.monthlyNetCashflow.map((net, idx) => (
+                            <td key={idx} className={`p-2 text-center ${net >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              {net !== 0 ? `${net < 0 ? '-' : ''}$${Math.abs(net).toLocaleString('en-AU', { maximumFractionDigits: 0 })}` : '$0'}
+                            </td>
+                          ))}
+                          <td className={`p-3 text-right font-black text-xs bg-[#3A3A3C] ${metrics.netCashFlow >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            {formatAUD(metrics.netCashFlow)}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: ACTIVITY LOG */}
+            {activeTab === 'transactions' && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between px-1">
+                  <div>
+                    <h2 className="text-lg font-extrabold text-white">Transactions Log</h2>
+                    <p className="text-xs text-zinc-400">{filteredTransactions.length} items logged for {selectedFY}</p>
+                  </div>
+                  <button
+                    onClick={() => { setEditingTx(null); setIsAddTxSheetOpen(true); }}
+                    className="bg-blue-600 active:bg-blue-700 text-white px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm"
+                  >
+                    <PlusIcon className="w-3.5 h-3.5" /> Log Entry
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <SearchIcon className="w-4 h-4 absolute left-3 top-2.5 text-zinc-400" />
+                  <input
+                    type="text"
+                    placeholder="Search category, payee, notes..."
+                    value={txSearch}
+                    onChange={(e) => setTxSearch(e.target.value)}
+                    className="w-full bg-[#1C1C1E] focus:bg-[#2C2C2E] text-white text-xs pl-9 pr-3 py-2.5 rounded-xl border border-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  {filteredTransactions.map(tx => {
+                    const prop = properties.find(p => p.id === tx.propertyId);
+                    return (
+                      <div key={tx.id} className="bg-[#1C1C1E] rounded-2xl p-3.5 border border-zinc-800 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
+                            tx.type === 'income' ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/50' : 'bg-[#2C2C2E] text-zinc-300'
+                          }`}>
+                            {tx.type === 'income' ? <ArrowDownRightIcon className="w-5 h-5" /> : <ArrowUpRightIcon className="w-5 h-5" />}
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-white line-clamp-1">{tx.category}</div>
+                            <div className="text-[10px] text-zinc-400 font-medium">
+                              {prop?.shortName || prop?.address.split(',')[0]} • {formatDateAU(tx.date)}
+                            </div>
+                            {tx.vendor && <div className="text-[10px] text-zinc-400 font-medium">{tx.vendor}</div>}
+                          </div>
+                        </div>
+
+                        <div className="text-right space-y-1">
+                          <div className={`text-xs font-black ${tx.type === 'income' ? 'text-emerald-400' : 'text-white'}`}>
+                            {tx.type === 'income' ? '+' : '-'}{formatAUDExact(tx.amount)}
+                          </div>
+                          <div className="flex items-center justify-end gap-1.5">
+                            {tx.attachment && (
+                              <button
+                                onClick={() => setPreviewAttachment(tx.attachment)}
+                                className="bg-blue-950/90 text-blue-400 text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-blue-800/60 flex items-center gap-1"
+                              >
+                                <PaperclipIcon className="w-3 h-3" /> Receipt
+                              </button>
+                            )}
+                            <button onClick={() => setTransactions(prev => prev.filter(t => t.id !== tx.id))} className="p-1 text-zinc-500 hover:text-rose-400">
+                              <Trash2Icon className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 5: ATO TAX SCHEDULE */}
+            {activeTab === 'tax' && (
+              <div className="space-y-4">
+                <div className="bg-gradient-to-br from-zinc-900 to-[#1C1C1E] text-white p-5 rounded-3xl border border-zinc-800 shadow-xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-400 bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                      ATO Schedule Item 21
+                    </span>
+                    <span className="text-xs text-zinc-300 font-semibold">{selectedFY}</span>
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-black text-white">Rental Tax Summary</h2>
+                    <p className="text-xs text-zinc-400 mt-1">Formatted for standard Australian Tax Office return.</p>
+                  </div>
+                  <button 
+                    onClick={() => window.print()}
+                    className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5"
+                  >
+                    <PrinterIcon className="w-3.5 h-3.5" /> Export Schedule (Print / PDF)
+                  </button>
+                </div>
+
+                <div className="bg-[#1C1C1E] rounded-3xl p-5 border border-zinc-800 space-y-3">
+                  <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-wider bg-emerald-950/60 border border-emerald-800/40 p-2 rounded-xl">
+                    1. Gross Rental Income
+                  </h3>
+                  <div className="divide-y divide-zinc-800 text-xs">
+                    {ATO_INCOME_CATEGORIES.map(category => {
+                      const total = transactions
+                        .filter(t => (selectedFY === 'ALL' || t.financialYear === selectedFY) &&
+                                     (selectedPropertyId === 'ALL' || t.propertyId === selectedPropertyId) &&
+                                     t.type === 'income' && t.category === category)
+                        .reduce((sum, t) => sum + t.amount, 0);
+                      return (
+                        <div key={category} className="py-2.5 flex justify-between items-center text-zinc-400">
+                          <span>{category}</span>
+                          <span className="font-bold text-white">{formatAUDExact(total)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="bg-[#1C1C1E] rounded-3xl p-5 border border-zinc-800 space-y-3">
+                  <h3 className="text-xs font-bold text-rose-400 uppercase tracking-wider bg-rose-950/60 border border-rose-800/40 p-2 rounded-xl">
+                    2. Deductible Expenses
+                  </h3>
+                  <div className="divide-y divide-zinc-800 text-xs">
+                    {ATO_EXPENSE_CATEGORIES.map(category => {
+                      const total = transactions
+                        .filter(t => (selectedFY === 'ALL' || t.financialYear === selectedFY) &&
+                                     (selectedPropertyId === 'ALL' || t.propertyId === selectedPropertyId) &&
+                                     t.type === 'expense' && t.isTaxDeductible && t.category === category)
+                        .reduce((sum, t) => sum + t.amount, 0);
+                      return (
+                        <div key={category} className="py-2.5 flex justify-between items-center text-zinc-400">
+                          <span>{category}</span>
+                          <span className="font-bold text-white">{formatAUDExact(total)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 6: CHARTS */}
+            {activeTab === 'analytics' && (
+              <div className="space-y-4">
+                <div className="bg-[#1C1C1E] rounded-3xl p-5 border border-zinc-800 space-y-3">
+                  <h3 className="text-sm font-bold text-white">Expense Distribution</h3>
+                  <p className="text-xs text-zinc-400">Portfolio outgoings breakdown for {selectedFY}</p>
+                  {ResponsiveContainer && (
+                    <div className="h-48 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={[
+                              { name: 'Interest on loans', value: 17350 },
+                              { name: 'Strata Levies', value: 3300 },
+                              { name: 'Insurance', value: 1450 },
+                              { name: 'Council & Water', value: 690 },
+                              { name: 'Repairs & Maint', value: 320 }
+                            ]}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={45}
+                            outerRadius={75}
+                            paddingAngle={3}
+                          >
+                            {DARK_CHART_COLORS.map((color, index) => (
+                              <Cell key={`cell-${index}`} fill={color} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(val) => formatAUD(val)} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+          </main>
+
+          {/* BOTTOM TAB BAR */}
+          <nav className="fixed bottom-0 left-0 right-0 z-30 bg-[#1C1C1E]/90 backdrop-blur-xl border-t border-zinc-800/80 px-1 py-2 pb-6">
+            <div className="max-w-md mx-auto grid grid-cols-6 gap-0.5 text-center">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`flex flex-col items-center py-1 transition-all ${
+                  activeTab === 'dashboard' ? 'text-blue-400 font-bold' : 'text-zinc-500 font-medium'
+                }`}
+              >
+                <BarChart2Icon className="w-5 h-5" />
+                <span className="text-[9px] mt-0.5">Overview</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('properties')}
+                className={`flex flex-col items-center py-1 transition-all ${
+                  activeTab === 'properties' ? 'text-blue-400 font-bold' : 'text-zinc-500 font-medium'
+                }`}
+              >
+                <HomeIcon className="w-5 h-5" />
+                <span className="text-[9px] mt-0.5">Assets</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('matrix')}
+                className={`flex flex-col items-center py-1 transition-all ${
+                  activeTab === 'matrix' ? 'text-blue-400 font-bold' : 'text-zinc-500 font-medium'
+                }`}
+              >
+                <GridIcon className="w-5 h-5" />
+                <span className="text-[9px] mt-0.5">Matrix</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('transactions')}
+                className={`flex flex-col items-center py-1 transition-all ${
+                  activeTab === 'transactions' ? 'text-blue-400 font-bold' : 'text-zinc-500 font-medium'
+                }`}
+              >
+                <ReceiptIcon className="w-5 h-5" />
+                <span className="text-[9px] mt-0.5">Activity</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('tax')}
+                className={`flex flex-col items-center py-1 transition-all ${
+                  activeTab === 'tax' ? 'text-blue-400 font-bold' : 'text-zinc-500 font-medium'
+                }`}
+              >
+                <FileTextIcon className="w-5 h-5" />
+                <span className="text-[9px] mt-0.5">ATO Tax</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('analytics')}
+                className={`flex flex-col items-center py-1 transition-all ${
+                  activeTab === 'analytics' ? 'text-blue-400 font-bold' : 'text-zinc-500 font-medium'
+                }`}
+              >
+                <PieChartIcon className="w-5 h-5" />
+                <span className="text-[9px] mt-0.5">Charts</span>
+              </button>
+            </div>
+          </nav>
+
+          {/* ADD ACTIVITY MODAL */}
+          {isAddTxSheetOpen && (
+            <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-end justify-center">
+              <div className="bg-[#1C1C1E] border-t border-zinc-800 w-full max-w-md rounded-t-[32px] p-5 shadow-2xl space-y-4 max-h-[88vh] overflow-y-auto">
+                <div className="w-10 h-1 bg-zinc-700 rounded-full mx-auto" />
+                <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
+                  <h3 className="font-black text-base text-white">Log New Activity</h3>
+                  <button onClick={() => setIsAddTxSheetOpen(false)} className="w-7 h-7 bg-zinc-800 text-zinc-300 rounded-full flex items-center justify-center text-xs">✕</button>
+                </div>
+                <form onSubmit={handleSaveTransaction} className="space-y-3.5">
+                  <div className="bg-[#2C2C2E] p-1 rounded-2xl grid grid-cols-2 text-center text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setTxForm(p => ({ ...p, type: 'expense', category: ATO_EXPENSE_CATEGORIES[0] }))}
+                      className={`py-2 rounded-xl transition-all ${txForm.type === 'expense' ? 'bg-rose-600 text-white' : 'text-zinc-400'}`}
+                    >
+                      Expense
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTxForm(p => ({ ...p, type: 'income', category: ATO_INCOME_CATEGORIES[0] }))}
+                      className={`py-2 rounded-xl transition-all ${txForm.type === 'income' ? 'bg-emerald-600 text-white' : 'text-zinc-400'}`}
+                    >
+                      Income
+                    </button>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Select Property</label>
+                    <select
+                      value={txForm.propertyId}
+                      onChange={(e) => setTxForm({ ...txForm, propertyId: e.target.value })}
+                      className="w-full text-xs font-semibold bg-[#2C2C2E] text-white border border-zinc-700 rounded-xl px-3 py-2.5"
+                    >
+                      {properties.map(p => (<option key={p.id} value={p.id}>{p.address}</option>))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">ATO Category</label>
+                    <select
+                      value={txForm.category}
+                      onChange={(e) => setTxForm({ ...txForm, category: e.target.value })}
+                      className="w-full text-xs font-semibold bg-[#2C2C2E] text-white border border-zinc-700 rounded-xl px-3 py-2.5"
+                    >
+                      {txForm.type === 'income' 
+                        ? ATO_INCOME_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)
+                        : ATO_EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Amount ($ AUD)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={txForm.amount}
+                        onChange={(e) => setTxForm({ ...txForm, amount: e.target.value })}
+                        required
+                        className="w-full text-xs font-bold bg-[#2C2C2E] text-white border border-zinc-700 rounded-xl px-3 py-2.5"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Date</label>
+                      <input
+                        type="date"
+                        value={txForm.date}
+                        onChange={(e) => setTxForm({ ...txForm, date: e.target.value })}
+                        required
+                        className="w-full text-xs font-semibold bg-[#2C2C2E] text-white border border-zinc-700 rounded-xl px-3 py-2.5"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Receipt Attachment</label>
+                    <input
+                      type="file"
+                      accept="image/*,application/pdf"
+                      onChange={handleFileUpload}
+                      className="w-full text-xs text-zinc-400 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white"
+                    />
+                  </div>
+                  <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold py-3 rounded-2xl text-xs">
+                    Save Transaction
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* QUICK LOOK MODAL */}
+          {previewAttachment && (
+            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+              <div className="bg-[#1C1C1E] border border-zinc-800 w-full max-w-sm rounded-3xl p-4 shadow-2xl space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
+                  <span className="font-bold text-xs text-white truncate">{previewAttachment.name}</span>
+                  <button onClick={() => setPreviewAttachment(null)} className="text-zinc-400 hover:text-white text-xs">✕</button>
+                </div>
+                <div className="rounded-2xl overflow-hidden border border-zinc-800 bg-black min-h-[250px] flex items-center justify-center p-2">
+                  <img src={previewAttachment.dataUrl} alt="Receipt" className="max-h-[380px] w-auto object-contain rounded-lg" />
+                </div>
+              </div>
+            </div>
+          )}
+
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
